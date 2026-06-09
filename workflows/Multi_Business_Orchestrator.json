@@ -1,0 +1,625 @@
+{
+  "name": "Multi_Business",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9cef0799-8476-4641-a63a-7dad14cae47f",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        -96
+      ],
+      "id": "3dca6604-f1fa-416d-9c0b-717bf5f2a275",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Error Occurred"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        816,
+        -192
+      ],
+      "id": "204dd705-546e-4c50-9515-49fc251df62e",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=sender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\nextracted text from file: \n{{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'invoice_file'\n] }}",
+        "options": {
+          "systemMessage": "You are a Business Process Orchestrator AI.\n\nYour only task is to ROUTE the request by USING exactly ONE available tool.\n\nAvailable tools:\n- Sales\n- Support\n- HR\n- Invoice\n- Marketing\n\nImportant:\n- Use the selected tool directly.\n- Do NOT write code.\n- Do NOT output tool-call text.\n- Do NOT print commands.\n- Do NOT respond in plain text.\n- Do NOT explain reasoning.\n- Do NOT ask questions.\n- Never output strings like <ctrl42>, call, print(), default_api.*\n\nRouting Rules:\n\nUse HR when input contains:\njob application, apply, candidate, resume, CV, skills, experience, projects, interview, developer, engineer, frontend, backend, database, hiring\n\nUse Invoice when input contains:\ninvoice, bill, payment, due date, total due, vendor, billing\n\nUse Support when input contains:\ncomplaint, issue, bug, refund, help, support, account problem\n\nUse Sales when input contains:\npricing, quotation, quote, demo, interested, partnership, proposal\n\nUse Marketing when input contains:\ncampaign, promotion, launch, social media, marketing email, advertise\n\nPriority Rules:\n- Resume/job application content always = HR\n- Invoice content = Invoice unless resume also exists\n- Always choose one tool immediately\n\nFor the provided sample with Job Application + resume text, use HR directly."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        752,
+        0
+      ],
+      "id": "9bf29b1b-e1c4-4993-8413-bdf90a6958c8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "description": "Use for complaint, issue, bug, help request",
+        "workflowId": {
+          "__rl": true,
+          "value": "xfSLOWlkt2apAuDx",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/xfSLOWlkt2apAuDx",
+          "cachedResultName": "Customer_Support"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "=source: {{ $json.source }}\nsender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\n{{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments' }}: {{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments'\n] }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        432
+      ],
+      "id": "0e959430-42f6-48eb-b517-d29715aa2895",
+      "name": "Customer_Support"
+    },
+    {
+      "parameters": {
+        "description": "Use for resume, job application, hiring",
+        "workflowId": {
+          "__rl": true,
+          "value": "IKIvAZzNJlzDVrpo",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/IKIvAZzNJlzDVrpo",
+          "cachedResultName": "HR"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "=source: {{ $json.source }}\nsender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\n{{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments' }}: {{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments'\n] }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        432
+      ],
+      "id": "5fdaea7c-9c53-41f5-8a8c-8ba32fb29891",
+      "name": "HR"
+    },
+    {
+      "parameters": {
+        "description": "Use for leads, pricing inquiry, demo request, business inquiry",
+        "workflowId": {
+          "__rl": true,
+          "value": "70QaiITOT3u3usZ1",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/70QaiITOT3u3usZ1",
+          "cachedResultName": "Sales/Leads"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "=source: {{ $json.source }}\nsender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\n{{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments' }}: {{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments'\n] }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        432
+      ],
+      "id": "3013bf5b-1861-4cc1-a8f0-05a0e89503e8",
+      "name": "Sales/Leads"
+    },
+    {
+      "parameters": {
+        "description": "Use for invoice, payment bill, vendor billing",
+        "workflowId": {
+          "__rl": true,
+          "value": "09xfEPh9zZfESd6M",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/09xfEPh9zZfESd6M",
+          "cachedResultName": "Invoice"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "=source: {{ $json.source }}\nsender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\n{{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments' }}: {{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments'\n] }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        432
+      ],
+      "id": "c7ddca89-e9fd-4d06-a985-0b5e35c29a76",
+      "name": "Invoice"
+    },
+    {
+      "parameters": {
+        "description": "Use for promotion, campaign, social media, ads",
+        "workflowId": {
+          "__rl": true,
+          "value": "1oXXybA3dadVOaFn",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1oXXybA3dadVOaFn",
+          "cachedResultName": "Marketing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "=source: {{ $json.source }}\nsender: {{ $json.sender }}\nsubject: {{ $json.subject }}\nmessage: {{ $json.message }}\n\n{{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments' }}: {{ $json[\n({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$json.source] || 'attachments'\n] }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        432
+      ],
+      "id": "0280cc18-cbab-46d3-9f10-2f8524880ce5",
+      "name": "Marketing"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orchestrator",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        -96
+      ],
+      "id": "66ec302b-e468-425f-9f48-cbfa4dcf0458",
+      "name": "Webhook",
+      "webhookId": "0eae69b6-d572-4a05-aef6-2afd573bf1ae"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "896221cb-58d3-4613-9559-1d13fb1fbed3",
+              "name": "source",
+              "value": "={{ $('Webhook').item.json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "77eb9d83-e9c5-42b9-aa1f-402944b2b5ac",
+              "name": "sender",
+              "value": "={{ $('Webhook').item.json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "1c3e6d88-f6c9-4aa4-bb9d-0cf86e3bd47b",
+              "name": "subject",
+              "value": "={{ $('Webhook').item.json.body.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "9f9ef2ad-5b61-46b5-a405-4dbd7086838d",
+              "name": "message",
+              "value": "={{ $('Webhook').item.json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "7b444ddf-7b2c-483e-b426-5bd90e9d08f6",
+              "name": "={{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$('Webhook').item.json.body.source] || 'file' }}",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        -96
+      ],
+      "id": "0584ee1d-069f-4d64-a13e-8506501d0ca8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        192
+      ],
+      "id": "53941b5d-dc67-4122-8f92-2954e565d37f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "={{ \n$json.body.source === 'email'\n? 'attachments'\n: ({\n    hr_form: 'resume',\n    invoice_form: 'invoice_file'\n  })[$json.body.source] || 'attachment_0'\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        -240
+      ],
+      "id": "2789a031-b3ff-4f3f-9778-63e54176351d",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ac687cb1-3173-4f1f-9a0c-0a7c702ff1a7",
+              "leftValue": "={{ Object.keys($binary ?? {}).length }}",
+              "rightValue": "={{ 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -64,
+        -96
+      ],
+      "id": "d0bfdc19-d913-4c99-b4e0-1b1a9140194a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "896221cb-58d3-4613-9559-1d13fb1fbed3",
+              "name": "source",
+              "value": "={{ $('Webhook').item.json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "77eb9d83-e9c5-42b9-aa1f-402944b2b5ac",
+              "name": "sender",
+              "value": "={{ $('Webhook').item.json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "1c3e6d88-f6c9-4aa4-bb9d-0cf86e3bd47b",
+              "name": "subject",
+              "value": "={{ $('Webhook').item.json.body.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "9f9ef2ad-5b61-46b5-a405-4dbd7086838d",
+              "name": "message",
+              "value": "={{ $('Webhook').item.json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "7b444ddf-7b2c-483e-b426-5bd90e9d08f6",
+              "name": "={{ ({\n  email: 'attachments',\n  hr_form: 'resume',\n  invoice_form: 'invoice_file'\n})[$('Webhook').item.json.body.source] || 'file' }}",
+              "value": "={{ $json.body.attachments }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        96
+      ],
+      "id": "6e954cea-74ec-4d02-9c53-8af49821bd4f",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer_Support": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales/Leads": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5d551d6a-2e01-4592-aca1-fdab66eadb6b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "ZgFq9zgNFPB4edoJ",
+  "tags": []
+}

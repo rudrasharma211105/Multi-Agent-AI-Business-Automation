@@ -1,0 +1,165 @@
+{
+  "name": "Invoice_Form_Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Invoice",
+        "formDescription": "Invoice",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name"
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "Upload Invoice",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "Enter your message",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05d03aa1-f9b4-49cb-8e3a-ed2d71a71693",
+      "name": "Invoice",
+      "webhookId": "0c201938-dc48-4a68-825d-1357bcfdff48"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c008e683-e0e5-4d6c-b1ca-eec3789b92d5",
+              "name": "email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "1eef16a5-cbce-4426-a889-8fa72d783fd6",
+              "name": "subject",
+              "value": "Invoice verification",
+              "type": "string"
+            },
+            {
+              "id": "65344626-b12d-4029-a866-55552117155d",
+              "name": "invoice_file",
+              "value": "Upload_Invoice",
+              "type": "binary"
+            },
+            {
+              "id": "2fe93ae3-ccb1-4b5d-88ce-d6183ed35aa1",
+              "name": "source",
+              "value": "invoice_form",
+              "type": "string"
+            },
+            {
+              "id": "a059d7c5-8ed6-43ad-9746-8c174c29e82a",
+              "name": "message",
+              "value": "={{ $json['Enter your message'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        0
+      ],
+      "id": "96c701e6-a382-4ace-a502-c541f4161fdd",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/orchestrator",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "invoice_file",
+              "inputDataFieldName": "invoice_file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "6e0479e1-63ff-401a-95ce-ab63feb1eeca",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Invoice": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d6e88ba5-6d30-4c7c-840f-7bb894c8cc4c",
+  "meta": {
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "y1vMxEQc6gAXFopf",
+  "tags": []
+}

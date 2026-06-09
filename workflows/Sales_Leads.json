@@ -1,0 +1,1457 @@
+{
+  "name": "Sales/Leads",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -912,
+        256
+      ],
+      "id": "08eea034-64ac-417b-8af2-e17859f7df3c",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Sales Lead Qualification AI.\n\nAnalyze the incoming lead request using:\n- source\n- sender\n- subject\n- message(body)\n\nClassify the lead into exactly ONE stage.\n\nAllowed stages:\n- READY_TO_BUY\n- NEEDS_CALL\n- EARLY_INTEREST\n- LOW_PRIORITY\n- PARTNERSHIP\n- SPAM\n\nDefinitions:\n\nREADY_TO_BUY:\nClear buying intent, asks pricing, quotation, proposal, wants demo soon, urgent requirement, ready to start.\n\nNEEDS_CALL:\nInterested but needs discussion, asks for call/meeting/demo details, wants consultation before buying.\n\nEARLY_INTEREST:\nGeneral curiosity, exploring options, asking about services/features with no urgency.\n\nLOW_PRIORITY:\nWeak intent, vague inquiry, student/researcher/non-serious request, no business urgency.\n\nPARTNERSHIP:\nCollaboration request, reseller inquiry, agency tie-up, affiliate, vendor partnership.\n\nSPAM:\nIrrelevant, scam, promotional junk, unrelated message.\n\nRules:\n- Output valid JSON only.\n- Do not explain reasoning.\n- Do not ask questions.\n- Use exact stage names only.\n- Also assign lead_score from 0 to 100.\n\nScore guidance:\nREADY_TO_BUY = 85–100\nNEEDS_CALL = 65–84\nEARLY_INTEREST = 40–64\nLOW_PRIORITY = 15–39\nPARTNERSHIP = 70–95\nSPAM = 0–14"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -512,
+        256
+      ],
+      "id": "7d8ba008-0ffa-4a8e-a04d-165c2f4b0109",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"lead_stage\": \"READY_TO_BUY\",\n  \"lead_score\": 95,\n  \"sender\": \"abc@example.com\",\n  \"subject\": \"Need pricing for automation project\",\n  \"message\": \"Please share pricing and schedule a demo call.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        464
+      ],
+      "id": "d41d497d-fd0d-43d0-9e8a-f29509901d8b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        464
+      ],
+      "id": "f66078d5-0e8e-41c8-8305-8f53b2ff9013",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "READY_TO_BUY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "969fed43-3456-4c90-894a-493310785810"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "READY_TO_BUY"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb4dbfe-8e22-4414-a9c5-33372c0af705",
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "NEEDS_CALL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NEEDS_CALL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b45a9d31-0b3d-416c-9103-c2b491d5d208",
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "EARLY_INTEREST",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "EARLY_INTEREST"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "65abf569-4f75-4c13-a54c-81253a840ea5",
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "LOW_PRIORITY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "LOW_PRIORITY"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0096d1d2-49f1-4b63-8860-f59b94d5c430",
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "PARTNERSHIP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PARTNERSHIP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1cae9105-a996-4cfe-a626-1142a9880ebf",
+                    "leftValue": "={{ $json.lead_stage }}",
+                    "rightValue": "SPAM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SPAM"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        192
+      ],
+      "id": "b747abce-5d38-4655-9d4b-307af3f59150",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"lead_stage\": {{ $json.output.lead_stage }},\n  \"lead_score\": {{ $json.output.lead_score }},\n  \"sender\": \"{{ $json.output.sender }}\",\n  \"subject\": \"{{ $json.output.subject }}\",\n  \"message\": \"{{ $json.output.message }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        256
+      ],
+      "id": "1b25c228-5a86-4fbc-b1c0-fc90a2b27eec",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9babfb03-d274-41a7-b4c6-c41b1570c051",
+              "name": "input",
+              "value": "={{ $json.input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        256
+      ],
+      "id": "86ffa9b5-98a6-45c6-8622-91f536d88bf0",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Thank you for your interest",
+        "emailType": "text",
+        "message": "Hi,\n\nThanks for contacting us. We’d be happy to discuss your requirements and share pricing. Our team will contact you shortly.\n\nBest regards\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -272
+      ],
+      "id": "7900bd21-3518-41f5-ab7a-877098bdedf9",
+      "name": "Send a message",
+      "webhookId": "dad22644-d436-44d4-b244-81e9c74cccb3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Thanks for Contacting Us",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for reaching out. We’ve received your inquiry and will review it shortly.\n\nBest regards\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        368
+      ],
+      "id": "02aac9f3-0185-4e7f-894a-b9f48c69bbe5",
+      "name": "Send a message3",
+      "webhookId": "3a08355a-0812-44ee-9ca3-3087ec5c7bad",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "={{ $('Edit Fields').item.json.subject }} Reply",
+        "emailType": "text",
+        "message": "We request you kindly do not spam\n\nBest regards\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        784
+      ],
+      "id": "199c74c9-cf8a-4881-ae6a-675ff7f6f976",
+      "name": "Spam Message Reply",
+      "webhookId": "6ae17b2b-10b3-4b26-b3fa-a63df590242d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Partnership Opportunity Received",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for your interest in partnering with us. Our business team will review your proposal and get back to you soon.\n\nBest regards\nBusiness Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        576
+      ],
+      "id": "9c2c6983-ba75-4fd3-ba0e-70a786f031c6",
+      "name": "Partnership Message Reply",
+      "webhookId": "a7f8098f-d2c1-48bd-871d-56ccf56f638a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811764058,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1811764058"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Sender": "={{ $('Edit Fields').item.json.sender }}",
+            "Subject": "={{ $('Edit Fields').item.json.subject }}",
+            "Message": "={{ $('Edit Fields').item.json.message }}",
+            "Lead Stage": "={{ $('Edit Fields').item.json.lead_stage }}",
+            "Lead Score": "={{ $('Edit Fields').item.json.lead_score }}",
+            "Status": "NEW",
+            "Source": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Stage",
+              "displayName": "Lead Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        -272
+      ],
+      "id": "ad848faf-6162-440b-8365-f86740b34f0a",
+      "name": "CRM",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Let’s Schedule a Call",
+        "message": "Hi,\n\nThank you for your interest. We'd be happy to understand your needs better. Please reply with a convenient time for a quick call.\n\nBest regards\nSales Team",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Date",
+              "fieldType": "date",
+              "defaultValue": "={{ $now.toFormat('yyyy-MM-dd') }}",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Time",
+              "placeholder": "Time(eg: 05:00, 22:30, etc.)",
+              "defaultValue": "={{ $now.toFormat('HH:mm') }}",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -64
+      ],
+      "id": "4bdd06b0-dfd8-4cb3-b603-b33514714157",
+      "name": "Send message and wait for response",
+      "webhookId": "b007200d-4a6b-4b7e-bb28-b9de4263d563",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811764058,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1811764058"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Sender": "={{ $('Edit Fields').item.json.sender }}",
+            "Subject": "={{ $('Edit Fields').item.json.subject }}",
+            "Message": "={{ $('Edit Fields').item.json.message }}",
+            "Lead Stage": "={{ $('Edit Fields').item.json.lead_stage }}",
+            "Lead Score": "={{ $('Edit Fields').item.json.lead_score }}",
+            "Status": "Meeting Scheduled",
+            "Source": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Stage",
+              "displayName": "Lead Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        992,
+        -64
+      ],
+      "id": "d641c576-1873-447e-b377-da389d75fe83",
+      "name": "CRM1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811764058,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1811764058"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Sender": "={{ $('Edit Fields').item.json.sender }}",
+            "Subject": "={{ $('Edit Fields').item.json.subject }}",
+            "Message": "={{ $('Edit Fields').item.json.message }}",
+            "Lead Stage": "={{ $('Edit Fields').item.json.lead_stage }}",
+            "Lead Score": "={{ $('Edit Fields').item.json.lead_score }}",
+            "Status": "NEW",
+            "Source": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Stage",
+              "displayName": "Lead Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        144
+      ],
+      "id": "05ec87e3-702b-447b-a0bb-24d97dc92ec8",
+      "name": "CRM2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Thanks for Reaching Out",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for your interest in our services. We’d be happy to share more information and answer any questions.\n\nBest regards\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        144
+      ],
+      "id": "025db464-c36e-4b33-800f-c9797d3fe687",
+      "name": "Send a message1",
+      "webhookId": "0c3d45c5-82c3-4337-985f-509f18eab40b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811764058,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1811764058"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Sender": "={{ $('Edit Fields').item.json.sender }}",
+            "Subject": "={{ $('Edit Fields').item.json.subject }}",
+            "Message": "={{ $('Edit Fields').item.json.message }}",
+            "Lead Stage": "={{ $('Edit Fields').item.json.lead_stage }}",
+            "Lead Score": "={{ $('Edit Fields').item.json.lead_score }}",
+            "Status": "IGNORED",
+            "Source": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Stage",
+              "displayName": "Lead Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        368
+      ],
+      "id": "b9415c21-b32a-48d9-8bee-cd1fbea8fd25",
+      "name": "CRM3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1811764058,
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1811764058"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Sender": "={{ $('Edit Fields').item.json.sender }}",
+            "Subject": "={{ $('Edit Fields').item.json.subject }}",
+            "Message": "={{ $('Edit Fields').item.json.message }}",
+            "Lead Stage": "={{ $('Edit Fields').item.json.lead_stage }}",
+            "Lead Score": "={{ $('Edit Fields').item.json.lead_score }}",
+            "Status": "FOLLOW-UP",
+            "Source": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Stage",
+              "displayName": "Lead Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        576
+      ],
+      "id": "95b0fe00-e596-490d-b53b-1b43a065cecf",
+      "name": "CRM4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0ATW1V6EQL",
+          "mode": "list",
+          "cachedResultName": "all-akmsp"
+        },
+        "text": "=New Hot Lead\nstage: {{ $('Edit Fields').item.json.lead_stage }}\nsender: {{ $('Edit Fields').item.json.sender }}\nsubject: {{ $('Edit Fields').item.json.subject }}\nmessage: {{ $('Edit Fields').item.json.message }}\nLOOK INTO IT ASAP",
+        "otherOptions": {
+          "mrkdwn": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        768,
+        -272
+      ],
+      "id": "e5f58e05-6027-4105-b3f7-46c427df5fe8",
+      "name": "Send a message2",
+      "webhookId": "5f1c628b-f04b-4b67-a6c5-8b84d82ab50d",
+      "credentials": {
+        "slackApi": {
+          "id": "ezQEvEk53nTqPq3N",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0ATW1V6EQL",
+          "mode": "list",
+          "cachedResultName": "all-akmsp"
+        },
+        "text": "=New Partnership request\nstage: {{ $('Edit Fields').item.json.lead_stage }}\nsender: {{ $('Edit Fields').item.json.sender }}\nsubject: {{ $('Edit Fields').item.json.subject }}\nmessage: {{ $('Edit Fields').item.json.message }}\nLOOK INTO IT ASAP",
+        "otherOptions": {
+          "mrkdwn": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        752,
+        576
+      ],
+      "id": "b499b429-0a4e-4741-b08d-395e669e0305",
+      "name": "Send a message4",
+      "webhookId": "5f1c628b-f04b-4b67-a6c5-8b84d82ab50d",
+      "credentials": {
+        "slackApi": {
+          "id": "ezQEvEk53nTqPq3N",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.sender }}",
+        "subject": "Meeting Confirmation",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for your interest. We have scheduled the meeting for your preferred time.\n\nBest regards,\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        -64
+      ],
+      "id": "00b47ad9-86f7-45fe-ad12-6c6c66a9026b",
+      "name": "Send a message5",
+      "webhookId": "f91addd0-0139-447a-8f70-07dea130d981",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "061fa708a5bb5553786e4f13e73126940635dc1e0dae8b03f29aae78122cddd7@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "start": "={{ DateTime.fromFormat($('Send message and wait for response').item.json.data.Date + ' ' + $('Send message and wait for response').item.json.data.Time, 'yyyy-MM-dd HH:mm') }}",
+        "end": "={{ DateTime.fromFormat($('Send message and wait for response').item.json.data.Date + ' ' + $('Send message and wait for response').item.json.data.Time, 'yyyy-MM-dd HH:mm').plus({ hours: 1 }) }}",
+        "additionalFields": {
+          "summary": "Call"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        -64
+      ],
+      "id": "786a892e-2900-4b4f-bd13-3416dfc43a19",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "WmEZVRNxylVK0Ahj",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Partnership Message Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Spam Message Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partnership Message Reply": {
+      "main": [
+        [
+          {
+            "node": "CRM4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "CRM3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "CRM2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM4": {
+      "main": [
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message5": {
+      "main": [
+        [
+          {
+            "node": "CRM1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM1": {
+      "main": [
+        []
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "712bf58d-a78d-41bd-b108-0a9000c7c12c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "70QaiITOT3u3usZ1",
+  "tags": []
+}

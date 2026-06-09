@@ -1,0 +1,314 @@
+{
+  "name": "Gmail_Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        -32
+      ],
+      "id": "701c29a2-df56-4dea-ac8f-172e3d15ce5d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61a81f3a-dd57-4238-9883-dfc7c7c5af84",
+              "name": "source",
+              "value": "email",
+              "type": "string"
+            },
+            {
+              "id": "4b455f30-082d-469c-bec2-2610a7513b18",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "5fcbaf77-89b1-4792-8df9-07940fbb0b90",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "d0a4a93a-d053-484e-b7e4-b2ee7bcc785c",
+              "name": "sender",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "c82141c0-72b6-4082-b488-bf897dafe574",
+              "name": "attachments",
+              "value": "={{ $binary && Object.keys($binary).length ? Object.keys($binary)[0] : '' }}",
+              "type": "binary"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -192
+      ],
+      "id": "75518e47-4b47-49a7-b0a8-af374d3983d0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/orchestrator",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.sender }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments",
+              "inputDataFieldName": "attachments"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        -192
+      ],
+      "id": "b5428bfc-54c0-4463-8f77-4d16248d2161",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2161548b-33f1-43d9-94b6-82bc51794c4b",
+              "leftValue": "=attachment_0",
+              "rightValue": "={{ Object.keys($binary ?? {}).length > 0 ? Object.keys($binary)[0] : null }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -336,
+        -32
+      ],
+      "id": "b3965099-1fa2-4b9a-bee7-2bba6cf085d9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61a81f3a-dd57-4238-9883-dfc7c7c5af84",
+              "name": "source",
+              "value": "email",
+              "type": "string"
+            },
+            {
+              "id": "4b455f30-082d-469c-bec2-2610a7513b18",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "5fcbaf77-89b1-4792-8df9-07940fbb0b90",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "d0a4a93a-d053-484e-b7e4-b2ee7bcc785c",
+              "name": "sender",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "c82141c0-72b6-4082-b488-bf897dafe574",
+              "name": "attachment_null",
+              "value": "=null",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "ed81f8c2-411f-4d6c-b39f-162d9e263408",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/orchestrator",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.sender }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "attachments",
+              "value": "={{ $json.attachment_null }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "a887d990-ae8a-4c6b-801d-d9db3b68b347",
+      "name": "HTTP Request3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "51b99827-2d04-49aa-b7d5-c2d1800bd8ef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "cOOkMfVMGJL1EgKu",
+  "tags": []
+}

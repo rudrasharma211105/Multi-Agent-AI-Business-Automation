@@ -1,0 +1,987 @@
+{
+  "name": "Marketing",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -624,
+        256
+      ],
+      "id": "2bccf026-0b66-4dd8-9098-f6327193644b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Marketing Campaign Planning AI.\n\nYour task:\nAnalyze a marketing request and generate a structured marketing campaign plan and content.\n\nYou will receive the following information:\n- customer email\n- campaign subject\n- campaign description (email body or form input)\n\nYour responsibilities:\n1. Identify the marketing campaign goal.\n2. Decide the most appropriate campaign type.\n3. Assess the urgency of the campaign.\n4. Generate marketing content based on the campaign type.\n\nCampaign type must be exactly ONE of:\n- EMAIL\n- SOCIAL_MEDIA\n- MIXED\n\nUrgency must be exactly ONE of:\n- HIGH\n- MEDIUM\n- LOW\n\nCampaign goal rules:\n- Extract the campaign goal from the subject or description.\n- If unclear, infer the most appropriate goal based on context.\n\nContent generation rules:\n- If campaign_type is EMAIL:\n  - Generate a professional email subject and email body.\n  - Set social_post to the STRING \"null\".\n- If campaign_type is SOCIAL_MEDIA:\n  - Generate ONE short promotional social media post.\n  - Set email_subject and email_body to the STRING \"null\".\n- If campaign_type is MIXED:\n  - Generate both email content and ONE social media post.\n\nIMPORTANT OUTPUT RULES:\n- Do NOT return actual null values.\n- If a field is not applicable, return the STRING value \"null\".\n- All fields defined in the output schema must be present.\n- Output must strictly match the provided output schema.\n\nGeneral rules:\n- Do NOT ask questions.\n- Do NOT explain reasoning.\n- Do NOT generate conversational text.\n- Do NOT include emojis.\n- Output must be valid JSON only."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -272,
+        256
+      ],
+      "id": "07bd006b-ced9-4dc6-b460-16dfcd31476c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"customer_email\": \"marketing@company.com\",\n  \"campaign_type\": \"SOCIAL_MEDIA\",\n  \"campaign_goal\": \"Feature Announcement\",\n  \"urgency\": \"HIGH\",\n  \"email_subject\": \"null\",\n  \"email_body\": \"null\",\n  \"social_post\": \"Exciting news! Our new AI feature is live and designed to make automation smarter and faster.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        448
+      ],
+      "id": "285fcb5c-8b05-45bc-a83d-5be3bb1618f4",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        448
+      ],
+      "id": "9a6428fd-5564-44c1-9a2c-7bec1499b244",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.campaign_type }}",
+                    "rightValue": "EMAIL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "969fed43-3456-4c90-894a-493310785810"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "EMAIL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb4dbfe-8e22-4414-a9c5-33372c0af705",
+                    "leftValue": "={{ $json.output.campaign_type }}",
+                    "rightValue": "SOCIAL_MEDIA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SOCIAL MEDIA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b45a9d31-0b3d-416c-9103-c2b491d5d208",
+                    "leftValue": "={{ $json.output.campaign_type }}",
+                    "rightValue": "MIXED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MIXED"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        240
+      ],
+      "id": "ff67269b-3c79-482c-a6df-29633e8c6ed7",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.emails }}",
+        "subject": "={{ $('AI Agent1').item.json.output.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $('AI Agent1').item.json.output.email_body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        -96
+      ],
+      "id": "f7981188-fb7c-4e4f-9697-140426729f6b",
+      "name": "Send a message",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "=Create an attractive Instagram post for marketing for:  {{ $('AI Agent').item.json.output.social_post }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        256
+      ],
+      "id": "abc2e5df-8bb0-4483-be84-820d20e084f5",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "MUkN6adKPHXbqPqg",
+          "name": "gemini(image)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1956830557,
+          "mode": "list",
+          "cachedResultName": "marketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1956830557"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "campaign_type": "={{ $json.output.campaign_type }}",
+            "campaign_goal": "={{ $json.output.campaign_goal }}",
+            "urgency": "={{ $json.output.urgency }}",
+            "created_by": "={{ $json.output.customer_email }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "campaign_type",
+              "displayName": "campaign_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "campaign_goal",
+              "displayName": "campaign_goal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_by",
+              "displayName": "created_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        336,
+        256
+      ],
+      "id": "712d4a96-a17f-4800-b2a9-582f08788771",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Input Data:\ngoal: {{ $('AI Agent').item.json.output.campaign_goal }}\nsubject: {{ $('AI Agent').item.json.output.email_subject }}\nmessage_body: {{ $('AI Agent').item.json.output.email_body }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Act as an expert copywriter and write a high-converting marketing email based on this Input Data.\n\nRequirements:\n\nSubject Line: Write one catchy, high-converting subject line tailored to the urgency level.\n\nBody Copy: Expand the email_body into a customer-centric narrative. Use short paragraphs and bullet points for readability.\n\nTone & Goal: Match the tone to the urgency (High = energetic with a time-sensitive CTA; Low/Med = informative/nurturing). Drive all copy toward the campaign_goal.\n\nSign-off: Base the brand voice and professional sign-off on the domain in customer_email.\n\nOutput Format:\nYou must respond with ONLY valid JSON matching the exact schema below. Do not include markdown code blocks (```json) or any other conversational text.\n\n{\n\"email_subject\": \"Your optimized subject line here\",\n\"email_body\": \"Your complete, formatted email body copy here\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        384,
+        -96
+      ],
+      "id": "885dd84c-ac50-4e20-8bba-1517da271f72",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_subject\": \"STRING\",\n  \"email_body\": \"STRING\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        96
+      ],
+      "id": "9ecb0fa8-a77a-453f-911d-349c8081d07f",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        336,
+        96
+      ],
+      "id": "29833e4e-21bf-4128-9e98-fb6a7d83c393",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9babfb03-d274-41a7-b4c6-c41b1570c051",
+              "name": "input",
+              "value": "={{ $json.input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        256
+      ],
+      "id": "a07e2005-cfad-4294-bf1b-51a06b87da43",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1956830557,
+          "mode": "list",
+          "cachedResultName": "marketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1956830557"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "campaign_type": "={{ $('AI Agent').item.json.output.campaign_type }}",
+            "campaign_goal": "={{ $('AI Agent').item.json.output.campaign_goal }}",
+            "urgency": "={{ $('AI Agent').item.json.output.urgency }}",
+            "created_by": "={{ $('AI Agent').item.json.output.customer_email }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "campaign_type",
+              "displayName": "campaign_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "campaign_goal",
+              "displayName": "campaign_goal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_by",
+              "displayName": "created_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        -96
+      ],
+      "id": "fd9d66bf-0858-4081-abcb-400f2add0463",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "05219d69-2423-4529-9338-9130915e034f",
+              "name": "emails",
+              "value": "holahoal331@gmail.com, picktip4@gmail.com, rudra.sharmamum@gmail.com, holahoal3311@gmail.com, vighneshsontakke7@gmail.com, 767utksingh@gmail.com, vighneshsontakke6@gmail.com, shrvnpanda@gmail.com, premdrajput@gmail.com, atharvajoshi2106@gmail.com, tanayshinde081@gmail.com, lata.sharmamum@gmail.com, theframeforge2@gmail.com, yaduvanshidron@gmail.com, shubhamnandwalkar07@gmail.com, anshulsharma4864@gmail.com, aringovekar10@gmail.com, dragofficial28@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        -96
+      ],
+      "id": "c059ca15-7993-41d3-bea6-89bfe3a20735",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.emails }}",
+        "subject": "={{ $('AI Agent2').item.json.output.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $('AI Agent2').item.json.output.email_body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        432
+      ],
+      "id": "401897eb-b7ec-41f5-b69a-9eb37f2b0d29",
+      "name": "Send a message1",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Input Data:\ngoal: {{ $('AI Agent').item.json.output.campaign_goal }}\nsubject: {{ $('AI Agent').item.json.output.email_subject }}\nmessage_body: {{ $('AI Agent').item.json.output.email_body }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Act as an expert copywriter and write a high-converting marketing email based on this Input Data.\n\nRequirements:\n\nSubject Line: Write one catchy, high-converting subject line tailored to the urgency level.\n\nBody Copy: Expand the email_body into a customer-centric narrative. Use short paragraphs and bullet points for readability.\n\nTone & Goal: Match the tone to the urgency (High = energetic with a time-sensitive CTA; Low/Med = informative/nurturing). Drive all copy toward the campaign_goal.\n\nSign-off: Base the brand voice and professional sign-off on the domain in customer_email.\n\nOutput Format:\nYou must respond with ONLY valid JSON matching the exact schema below. Do not include markdown code blocks (```json) or any other conversational text.\n\n{\n\"email_subject\": \"Your optimized subject line here\",\n\"email_body\": \"Your complete, formatted email body copy here\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        432
+      ],
+      "id": "8967ee22-ed12-43ed-a012-2dad6c166517",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_subject\": \"STRING\",\n  \"email_body\": \"STRING\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        624
+      ],
+      "id": "0be84427-3b36-47b2-a944-f92ab1e7f570",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        320,
+        624
+      ],
+      "id": "8a67a929-fb11-4144-bc1b-03668fa85713",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1956830557,
+          "mode": "list",
+          "cachedResultName": "marketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1956830557"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "campaign_type": "={{ $('AI Agent').item.json.output.campaign_type }}",
+            "campaign_goal": "={{ $('AI Agent').item.json.output.campaign_goal }}",
+            "urgency": "={{ $('AI Agent').item.json.output.urgency }}",
+            "created_by": "={{ $('AI Agent').item.json.output.customer_email }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "campaign_type",
+              "displayName": "campaign_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "campaign_goal",
+              "displayName": "campaign_goal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_by",
+              "displayName": "created_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1104,
+        432
+      ],
+      "id": "997b275b-4dfa-4547-8304-3c2071969f29",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "05219d69-2423-4529-9338-9130915e034f",
+              "name": "emails",
+              "value": "holahoal331@gmail.com, picktip4@gmail.com, rudra.sharmamum@gmail.com, holahoal3311@gmail.com, vighneshsontakke7@gmail.com, 767utksingh@gmail.com, vighneshsontakke6@gmail.com, shrvnpanda@gmail.com, premdrajput@gmail.com, atharvajoshi2106@gmail.com, tanayshinde081@gmail.com, lata.sharmamum@gmail.com, theframeforge2@gmail.com, yaduvanshidron@gmail.com, shubhamnandwalkar07@gmail.com, anshulsharma4864@gmail.com, aringovekar10@gmail.com, dragofficial28@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        432
+      ],
+      "id": "d5ca8f1d-df32-4c08-ae32-eee15a86db6c",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "=Create an attractive Instagram post for marketing for:  {{ $('AI Agent').item.json.output.social_post }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        288
+      ],
+      "id": "e59f613b-8a22-4183-b0f1-2c51f5e97477",
+      "name": "Generate an image1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "MUkN6adKPHXbqPqg",
+          "name": "gemini(image)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "17841435100265937",
+        "edge": "media",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        800,
+        256
+      ],
+      "id": "f82aff0a-fbb7-45a5-a393-7b5ad8af1084",
+      "name": "Facebook Graph API",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "aYEIKvdJjSCfHpAV",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "17841435100265937",
+        "edge": "media",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        288
+      ],
+      "id": "713cab86-68d0-407f-8c01-bf8865cb5729",
+      "name": "Facebook Graph API1",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "aYEIKvdJjSCfHpAV",
+          "name": "Facebook Graph account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Generate an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image1": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e7de8531-ef81-4014-a58d-e45874b50d8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "1oXXybA3dadVOaFn",
+  "tags": []
+}

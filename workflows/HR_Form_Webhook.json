@@ -1,0 +1,165 @@
+{
+  "name": "HR_Form_Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Job application",
+        "formDescription": "job application",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name"
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "Upload your Resume",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "Description about yourself",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3ed282d2-721d-4789-bfd2-40c9f03302c4",
+      "name": "HR",
+      "webhookId": "c0f7aee8-f416-4133-9034-57622ce28537"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c008e683-e0e5-4d6c-b1ca-eec3789b92d5",
+              "name": "email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "4c5fff1d-8ce6-41ae-acdc-eb97bdeafd86",
+              "name": "description",
+              "value": "={{ $json['Description about yourself'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1eef16a5-cbce-4426-a889-8fa72d783fd6",
+              "name": "subject",
+              "value": "Job Application",
+              "type": "string"
+            },
+            {
+              "id": "65344626-b12d-4029-a866-55552117155d",
+              "name": "resume",
+              "value": "Upload_your_Resume",
+              "type": "binary"
+            },
+            {
+              "id": "2fe93ae3-ccb1-4b5d-88ce-d6183ed35aa1",
+              "name": "source",
+              "value": "hr_form",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        0
+      ],
+      "id": "ccd57c85-afca-4dc6-b46c-5c182a63dab1",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/orchestrator",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "resume",
+              "inputDataFieldName": "resume"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "db4bac95-8a68-47ab-9388-b59847df1a49",
+      "name": "HTTP Request2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HR": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c8c03440-23f0-4068-9b78-35657bdd478c",
+  "meta": {
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "riNjrD3D5bHhYuhW",
+  "tags": []
+}

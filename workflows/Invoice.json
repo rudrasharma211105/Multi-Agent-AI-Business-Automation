@@ -1,0 +1,788 @@
+{
+  "name": "Invoice",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        224
+      ],
+      "id": "d25fa8b9-28ae-4eca-806a-43ea7128a5a1",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an Invoice Analysis AI for a startup company.\n\nYour task:\nAnalyze incoming invoice/payment related requests using:\n\n- sender\n- subject\n- message\n- extracted invoice text (if available)\n\nDecide exactly ONE status:\n\n- APPROVED\n- REVIEW_REQUIRED\n- SUSPICIOUS\n\nAlso assign exactly ONE risk level:\n\n- LOW\n- MEDIUM\n- HIGH\n\nAlso extract:\n\n- vendor_name\n- vendor_email\n- invoice_number\n- invoice_date\n- due_date\n- total_amount\n- payment_method\n\nDecision Rules:\n\nAPPROVED:\nKnown vendor, clear invoice number, normal amount, proper details, no fraud signs.\n\nREVIEW_REQUIRED:\nMissing fields, new vendor, unusual amount, duplicate possibility, unclear invoice.\n\nSUSPICIOUS:\nUrgent payment request, mismatched sender/vendor, fake language, changed bank account, scam indicators.\n\nRisk Rules:\n\nLOW:\nTrusted invoice, complete details.\n\nMEDIUM:\nSome uncertainty, manual check needed.\n\nHIGH:\nLikely fraud or risky transaction.\n\nRules:\n- Base decision only on provided content\n- Output valid JSON only\n- Do not explain reasoning\n- Do not ask questions\n- Use exact values only"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -528,
+        224
+      ],
+      "id": "79b9177a-fa4d-402d-b2f4-0b907a122e9d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"invoice_status\": \"APPROVED\",\n  \"risk_level\": \"LOW\",\n  \"vendor_name\": \"XYZ Enterprises\",\n  \"vendor_email\": \"abc@example.com\",\n  \"invoice_number\": \"INV-2025-045\",\n  \"invoice_date\": \"2025-03-08\",\n  \"due_date\": \"2025-03-22\",\n  \"total_amount\": \"13856.50\",\n  \"payment_method\": \"ACH Transfer\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        432
+      ],
+      "id": "886a856e-8130-4130-a90f-661dff06fcd9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        448
+      ],
+      "id": "08074d5c-76e2-4b12-bc54-1dd6bde724d0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jSex1EEjGkc5W06u",
+          "name": "Google Gemini Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.invoice_status }}",
+                    "rightValue": "APPROVED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "969fed43-3456-4c90-894a-493310785810"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "APPROVED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb4dbfe-8e22-4414-a9c5-33372c0af705",
+                    "leftValue": "={{ $json.output.invoice_status }}",
+                    "rightValue": "REVIEW REQUIRED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REVIEW REQUIRED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b45a9d31-0b3d-416c-9103-c2b491d5d208",
+                    "leftValue": "={{ $json.output.invoice_status }}",
+                    "rightValue": "SUSPICIOUS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SUSPICIOUS"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "f5f3f70c-6a25-4829-ba20-54d12ffc95a9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.vendor_email }}",
+        "subject": "=Invoice Received and Approved",
+        "emailType": "text",
+        "message": "=Hi {{ $('AI Agent').item.json.output.vendor_name }},\n\nWe have received your invoice {{ $('AI Agent').item.json.output.invoice_number }} and it has been approved for processing.\n\nOur finance team will complete payment as per agreed terms.\n\nThank you.\n\nBest regards,\nFinance Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        16
+      ],
+      "id": "7ac5d23c-a4f8-48b0-9d5f-d148a464b327",
+      "name": "Send a message",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 467376313,
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=467376313"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Vendor Name": "={{ $('AI Agent').item.json.output.vendor_name }}",
+            "Vendor email": "={{ $('AI Agent').item.json.output.vendor_email }}",
+            "Invoice Number": "={{ $('AI Agent').item.json.output.invoice_number }}",
+            "Amount": "={{ $('AI Agent').item.json.output.total_amount }}",
+            "Risk Level": "={{ $('AI Agent').item.json.output.risk_level }}",
+            "Payment Status": "PAYMENT_PENDING",
+            "Due Date": "={{ $('AI Agent').item.json.output.due_date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor Name",
+              "displayName": "Vendor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor email",
+              "displayName": "Vendor email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk Level",
+              "displayName": "Risk Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        16
+      ],
+      "id": "1f6110c7-57c0-418b-8f19-571668a0bfed",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.vendor_email }}",
+        "subject": "Invoice Under Review",
+        "emailType": "text",
+        "message": "=Hi {{ $('AI Agent').item.json.output.vendor_name }},\n\nWe have received invoice {{ $('AI Agent').item.json.output.invoice_number }}.\n\nSome details require internal verification before processing. Our finance team will review and get back to you shortly.\n\nThank you for your patience.\n\nBest regards,\nFinance Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        224
+      ],
+      "id": "a7c2f74c-88f0-4981-afa8-5cffeae1aabb",
+      "name": "Send a message1",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=holahoal331@gmail.com",
+        "subject": "=Invoice Received",
+        "emailType": "text",
+        "message": "Hi,\n\nWe have received your submission and it is under internal review.\n\nBest regards,\nFinance Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        448
+      ],
+      "id": "e1f8d3cf-51d9-4b40-8236-f3ff0b5ed788",
+      "name": "Send a message2",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4E6ugImmMhlaKhvY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9babfb03-d274-41a7-b4c6-c41b1570c051",
+              "name": "input",
+              "value": "={{ $json.input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        224
+      ],
+      "id": "75949828-cf63-471f-8454-3d4b98d0d8f3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 467376313,
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=467376313"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Vendor Name": "={{ $('AI Agent').item.json.output.vendor_name }}",
+            "Vendor email": "={{ $('AI Agent').item.json.output.vendor_email }}",
+            "Invoice Number": "={{ $('AI Agent').item.json.output.invoice_number }}",
+            "Amount": "={{ $('AI Agent').item.json.output.total_amount }}",
+            "Risk Level": "={{ $('AI Agent').item.json.output.risk_level }}",
+            "Payment Status": "MANUAL_CHECK",
+            "Due Date": "={{ $('AI Agent').item.json.output.due_date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor Name",
+              "displayName": "Vendor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor email",
+              "displayName": "Vendor email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk Level",
+              "displayName": "Risk Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        224
+      ],
+      "id": "43d63163-938a-4d4d-964f-f17418872767",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 467376313,
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=467376313"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Vendor Name": "={{ $('AI Agent').item.json.output.vendor_name }}",
+            "Vendor email": "={{ $('AI Agent').item.json.output.vendor_email }}",
+            "Invoice Number": "={{ $('AI Agent').item.json.output.invoice_number }}",
+            "Amount": "={{ $('AI Agent').item.json.output.total_amount }}",
+            "Risk Level": "={{ $('AI Agent').item.json.output.risk_level }}",
+            "Payment Status": "REJECTED",
+            "Due Date": "={{ $('AI Agent').item.json.output.due_date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor Name",
+              "displayName": "Vendor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vendor email",
+              "displayName": "Vendor email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Risk Level",
+              "displayName": "Risk Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        448
+      ],
+      "id": "3ccbf6d3-b10b-44ad-8fbd-c808a9ee46ca",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "23fa0eeb-8e11-4308-9331-5b29cd290f61",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "09xfEPh9zZfESd6M",
+  "tags": []
+}

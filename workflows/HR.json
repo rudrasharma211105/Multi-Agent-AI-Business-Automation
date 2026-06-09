@@ -1,0 +1,835 @@
+{
+  "name": "HR",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -384,
+        -128
+      ],
+      "id": "9259e2c1-cea9-493c-a566-262917202886",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an HR Recruitment AI for a startup company.\n\nYour task:\nAnalyze incoming job applications using:\n- sender\n- subject\n- message\n- extracted resume text (if available)\n\nDecide exactly ONE hiring decision:\n\n- SHORTLIST\n- HOLD\n- REJECT\n\nAlso extract:\n- candidate_name\n- applied_role\n- experience_years\n- top_skills\n- candidate_score (0 to 100)\n\nEvaluation Criteria (startup focused):\n- Relevant skills for the role\n- Hands-on/project experience\n- Ability to work in small teams\n- Fast learner / adaptable\n- Communication clarity\n- Ownership mindset\n- Immediate usefulness to company\n\nDecision Rules:\n\nSHORTLIST:\nStrong relevant skills, practical experience, good startup fit, interview-worthy.\n\nHOLD:\nDecent profile but not immediate fit, limited experience, future potential.\n\nREJECT:\nWeak match, unrelated background, insufficient skills, poor fit.\n\nScore Guide:\nSHORTLIST = 80 to 100\nHOLD = 55 to 79\nREJECT = 0 to 54\n\nInterview Scheduling Rules (ONLY if candidate_status is SHORTLIST):\n\n- Use the current date and time as reference: {{ $now }}\n- Never schedule interviews in the past.\n- Interview must be scheduled only in the future.\n\nAllowed scheduling window:\n- 1 day after {{ $now }}\nOR\n- 2 days after {{ $now }}\n\nDo NOT schedule:\n- Today\n- Any past date\n- More than 2 days after {{ $now }}\n\nAvailable interview slots:\n- 10:00 AM\n- 11:00 AM\n- 12:00 PM\n- 3:00 PM\n- 4:00 PM\n- 5:00 PM\n\nScheduling Logic:\n- Randomly choose either day +1 or day +2 from {{ $now }}\n- Randomly choose one available slot\n- Duration = exactly 1 hour\n\nOutput interview_time in ISO format:\n\nYYYY-MM-DDTHH:MM:SS\n\nExamples:\n2026-04-19T10:00:00\n2026-04-20T15:00:00\n\nImportant:\n- Year must be current/future based on {{ $now }}\n- Never use hardcoded old years like 2024\n- Always calculate from {{ $now }}\n\nIf unable to schedule:\n- Set interview_time = \"null\"\n\nRules:\n- Output valid JSON only\n- Do not explain reasoning\n- Do not ask questions\n- Use exact decision names only"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -32,
+        -128
+      ],
+      "id": "cda82af7-6ecb-4110-885a-994174eaf4ee",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"candidate_name\": \"Rahul Sharma\",\n  \"candidate_email\": \"rahul@gmail.com\",\n  \"applied_role\": \"Software Engineer\",\n  \"experience_years\": \"3\",\n  \"top_skills\": \"Java, Spring Boot, REST APIs, MySQL\",\n  \"candidate_score\": 88,\n  \"candidate_status\": \"SHORTLIST\",\n  \"interview_time\": \"2026-04-20 11:00 AM\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        80
+      ],
+      "id": "1d2746c5-86b9-4eeb-853c-c96b82775085",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        80
+      ],
+      "id": "01052541-5c2f-4f3d-9e96-75e1bafcfa9f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lS8sMfpLBIEPWFtb",
+          "name": "Google Gemini Api 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.candidate_status }}",
+                    "rightValue": "SHORTLIST",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "969fed43-3456-4c90-894a-493310785810"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SHORTLIST"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb4dbfe-8e22-4414-a9c5-33372c0af705",
+                    "leftValue": "={{ $json.output.candidate_status }}",
+                    "rightValue": "HOLD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HOLD"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b45a9d31-0b3d-416c-9103-c2b491d5d208",
+                    "leftValue": "={{ $json.output.candidate_status }}",
+                    "rightValue": "REJECT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REJECT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        -144
+      ],
+      "id": "fd7fdfb5-ec4d-4051-a45e-175404fc6b51",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.candidate_email }}",
+        "subject": "=Interview Invitation - {{ $('AI Agent').item.json.output.applied_role }}",
+        "emailType": "text",
+        "message": "=Hi {{ $('AI Agent').item.json.output.candidate_name }},\n\nThank you for applying for the {{ $('AI Agent').item.json.output.applied_role }} role.\n\nWe reviewed your profile and would like to invite you for an interview.\n\nInterview Time:\n{{ $('AI Agent').item.json.output.interview_time }}\n\nPlease reply to confirm your availability.\n\nBest regards,\nHiring Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        -336
+      ],
+      "id": "2c531a90-cb62-41ae-8d13-a71489f01560",
+      "name": "Send a message",
+      "webhookId": "58d0edfd-50c4-4888-b7f9-9f5b1d29473f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.candidate_email }}",
+        "subject": "=Application Update - {{ $('AI Agent').item.json.output.applied_role }}",
+        "emailType": "text",
+        "message": "=Hi {{ $('AI Agent').item.json.output.candidate_name }},\n\nThank you for applying for the {{ $('AI Agent').item.json.output.applied_role }} role.\n\nWe appreciate your interest and would like to keep your profile in our talent pool for future opportunities.\n\nWe will contact you if a suitable opening arises.\n\nBest regards,\nHiring Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        -128
+      ],
+      "id": "74aa01dd-b73b-41de-b90b-5d9b0d69e8bd",
+      "name": "Send a message1",
+      "webhookId": "1e4910a3-238e-45e3-adb7-158d22b05700",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.candidate_email }}",
+        "subject": "= Application Status - {{ $('AI Agent').item.json.output.applied_role }}",
+        "emailType": "text",
+        "message": "=Hi {{ $('AI Agent').item.json.output.candidate_name }},\n\nThank you for your interest in the {{ $('AI Agent').item.json.output.applied_role }} role.\n\nAfter careful review, we will not be proceeding further at this time.\n\nWe appreciate your time and wish you success in your career.\n\nBest regards,\nHiring Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        80
+      ],
+      "id": "9d08bb92-52ac-4da5-80d4-e9014586feae",
+      "name": "Send a message2",
+      "webhookId": "0be0d5d5-1f76-4eea-b19f-33e24a578ca6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2025239912,
+          "mode": "list",
+          "cachedResultName": "HR",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=2025239912"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Candidate Name": "={{ $('AI Agent').item.json.output.candidate_name }}",
+            "Applied Role": "={{ $('AI Agent').item.json.output.applied_role }}",
+            "Experience": "={{ $('AI Agent').item.json.output.experience_years }}",
+            "Skills": "={{ $('AI Agent').item.json.output.top_skills }}",
+            "Score": "={{ $('AI Agent').item.json.output.candidate_score }}",
+            "Interview Time": "={{ $('AI Agent').item.json.output.interview_time }}",
+            "Status": "={{ $('AI Agent').item.json.output.candidate_status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Applied Role",
+              "displayName": "Applied Role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        -336
+      ],
+      "id": "2671a2cf-94a5-4784-aece-ef73d2ac1817",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9babfb03-d274-41a7-b4c6-c41b1570c051",
+              "name": "input",
+              "value": "={{ $json.input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "8fa5cc4a-8ca8-4551-b4bb-67bea4855204",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2025239912,
+          "mode": "list",
+          "cachedResultName": "HR",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=2025239912"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Candidate Name": "={{ $('AI Agent').item.json.output.candidate_name }}",
+            "Applied Role": "={{ $('AI Agent').item.json.output.applied_role }}",
+            "Experience": "={{ $('AI Agent').item.json.output.experience_years }}",
+            "Skills": "={{ $('AI Agent').item.json.output.top_skills }}",
+            "Score": "={{ $('AI Agent').item.json.output.candidate_score }}",
+            "Interview Time": "={{ $('AI Agent').item.json.output.interview_time }}",
+            "Status": "={{ $('AI Agent').item.json.output.candidate_status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Applied Role",
+              "displayName": "Applied Role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        800,
+        -128
+      ],
+      "id": "07ea62e8-0d6c-42ad-91b3-3a94ef0f2e29",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2025239912,
+          "mode": "list",
+          "cachedResultName": "HR",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=2025239912"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Candidate Name": "={{ $('AI Agent').item.json.output.candidate_name }}",
+            "Applied Role": "={{ $('AI Agent').item.json.output.applied_role }}",
+            "Experience": "={{ $('AI Agent').item.json.output.experience_years }}",
+            "Skills": "={{ $('AI Agent').item.json.output.top_skills }}",
+            "Score": "={{ $('AI Agent').item.json.output.candidate_score }}",
+            "Interview Time": "={{ $('AI Agent').item.json.output.interview_time }}",
+            "Status": "={{ $('AI Agent').item.json.output.candidate_status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Applied Role",
+              "displayName": "Applied Role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        80
+      ],
+      "id": "b14f2c69-e829-4ca0-8f06-a897991a67ed",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "59e073625901adcf66ede99bbe35d3c11da94f69035e4d7760afdc29361bb51d@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "start": "={{ $('AI Agent').item.json.output.interview_time }}",
+        "end": "={{ DateTime.fromISO($('AI Agent').item.json.output.interview_time).plus({ hours: 1 }) }}",
+        "additionalFields": {
+          "summary": "={{ $json.output.applied_role }} Interview"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        -336
+      ],
+      "id": "15ce9bdc-56fd-4401-83e3-e7c04f854104",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "bbUj6FGp8qPSDm6F",
+          "name": "Google Calendar account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "0a54b76c-c73e-4ad1-a691-d90cee32cb5b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "IKIvAZzNJlzDVrpo",
+  "tags": []
+}

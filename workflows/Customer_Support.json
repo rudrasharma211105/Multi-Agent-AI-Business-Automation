@@ -1,0 +1,1333 @@
+{
+  "name": "Customer_Support",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -480,
+        -16
+      ],
+      "id": "e635751d-82bb-478b-9fe1-518f5f5b49f8",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Customer Support AI for a startup company.\n\nYour task:\nAnalyze incoming customer messages and classify them into exactly ONE support category.\n\nInput may contain:\n- source\n- sender\n- subject\n- message(body)\n\nAllowed categories:\n- URGENT_CUSTOMER\n- PAYMENT_ISSUE\n- PRODUCT_HELP\n- FEATURE_REQUEST\n- REFUND_CANCEL\n- SPAM\n\nDefinitions:\n\nURGENT_CUSTOMER:\nService outage, login blocked, major bug, angry customer, account inaccessible, business impact.\n\nPAYMENT_ISSUE:\nBilling problem, charged twice, failed payment, invoice request, subscription issue.\n\nPRODUCT_HELP:\nHow-to questions, setup help, troubleshooting, feature usage guidance.\n\nFEATURE_REQUEST:\nRequests new features, product improvements, integrations, suggestions.\n\nREFUND_CANCEL:\nWants refund, cancel subscription, unhappy and wants to leave.\n\nSPAM:\nIrrelevant, promotional junk, scam, unrelated messages.\n\nRules:\n- Output valid JSON only.\n- Do not explain reasoning.\n- Do not ask questions.\n- Use exact category names only.\n- Also assign priority_level:\nHIGH / MEDIUM / LOW\n\nPriority guide:\nURGENT_CUSTOMER = HIGH\nPAYMENT_ISSUE = HIGH\nPRODUCT_HELP = MEDIUM\nFEATURE_REQUEST = LOW\nREFUND_CANCEL = HIGH\nSPAM = LOW"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "60c2163c-3ef0-4a5a-b699-0253a0b6ca0b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"support_category\": \"PRODUCT_HELP\",\n  \"priority_level\": \"MEDIUM\",\n  \"customer_email\": \"abc@example.com\",\n  \"subject\": \"Need help with dashboard setup\",\n  \"message\": \"How do I connect my CRM to your dashboard?\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        192
+      ],
+      "id": "5ab3ab69-83a8-4f5d-aabc-938765aafc2f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        192
+      ],
+      "id": "b5cb3fb1-02bb-4932-80df-7908c7c41c67",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lS8sMfpLBIEPWFtb",
+          "name": "Google Gemini Api 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "URGENT_CUSTOMER",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "969fed43-3456-4c90-894a-493310785810"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "URGENT_CUSTOMER"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb4dbfe-8e22-4414-a9c5-33372c0af705",
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "PAYMENT_ISSUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PAYMENT_ISSUE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b45a9d31-0b3d-416c-9103-c2b491d5d208",
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "PRODUCT_HELP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PRODUCT_HELP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ebdc93b0-a594-4a56-93ca-f033a64bca9a",
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "FEATURE_REQUEST",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FEATURE_REQUEST"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a52a8858-2efe-4eb1-8ef0-a2209826e388",
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "REFUND_CANCEL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REFUND_CANCEL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4aaf1279-0bc9-4dc9-b82d-afd377af3cf0",
+                    "leftValue": "={{ $json.output.support_category }}",
+                    "rightValue": "SPAM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SPAM"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        -80
+      ],
+      "id": "b77fe56d-e369-4179-b8b2-fef04eaedc6d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9babfb03-d274-41a7-b4c6-c41b1570c051",
+              "name": "input",
+              "value": "={{ $json.input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -16
+      ],
+      "id": "d04cfb28-e8a0-482e-9e03-e6695ab103e3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "Priority Support Case Opened",
+        "emailType": "text",
+        "message": "Hi,\n\nWe’re sorry for the inconvenience. Your issue has been marked as high priority and our team is already investigating it. We’ll update you shortly.\n\nBest regards,\nSupport Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        -480
+      ],
+      "id": "82d00817-54fb-4af1-8f5c-ccb1eb81b045",
+      "name": "Send a message4",
+      "webhookId": "640f31a0-c637-4949-a1b4-e54695553952",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "={{ $('AI Agent').item.json.output.subject }} Reply",
+        "emailType": "text",
+        "message": "Hi,\n\nKindly do not spam\n\nBest regards,\nSupport Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        384
+      ],
+      "id": "371c1df2-287f-4b57-9f6a-2278f790fa9f",
+      "name": "Send a message5",
+      "webhookId": "b0159d45-af42-46f3-838c-89fca17c1c80",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1344061146,
+          "mode": "list",
+          "cachedResultName": "Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1344061146"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Customer Email": "={{ $('AI Agent').item.json.output.customer_email }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Category": "={{ $('AI Agent').item.json.output.support_category }}",
+            "Priority": "={{ $('AI Agent').item.json.output.priority_level }}",
+            "Status": "OPEN",
+            "Assigned To": "Support Lead"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        752,
+        -480
+      ],
+      "id": "d437fbe0-3d69-40a9-ad94-ab6e2f6abc19",
+      "name": "Append row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0ATW1V6EQL",
+          "mode": "list",
+          "cachedResultName": "all-akmsp"
+        },
+        "text": "=Customer Support Urgent Request\nsender: {{ $('AI Agent').item.json.output.customer_email }}\nsubject: {{ $('AI Agent').item.json.output.subject }}\nmessage: {{ $('AI Agent').item.json.output.message }}\nLOOK INTO IT ASAP",
+        "otherOptions": {
+          "mrkdwn": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        976,
+        -480
+      ],
+      "id": "ac9b00e0-4aa7-4d7e-9a84-4fcab40c5b04",
+      "name": "Send a message2",
+      "webhookId": "5f1c628b-f04b-4b67-a6c5-8b84d82ab50d",
+      "credentials": {
+        "slackApi": {
+          "id": "ezQEvEk53nTqPq3N",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "Billing Request Received",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for contacting us. We’ve received your billing/payment request and our finance team is reviewing it now.\n\nBest regards,\nBilling Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -304
+      ],
+      "id": "699453e5-34d6-4508-8c22-ea9b7d58be1b",
+      "name": "Send a message",
+      "webhookId": "d6767d65-96af-4b65-8181-36d887d65b93",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1344061146,
+          "mode": "list",
+          "cachedResultName": "Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1344061146"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Customer Email": "={{ $('AI Agent').item.json.output.customer_email }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Category": "={{ $('AI Agent').item.json.output.support_category }}",
+            "Priority": "={{ $('AI Agent').item.json.output.priority_level }}",
+            "Status": "OPEN",
+            "Assigned To": "Finance Lead"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        752,
+        -304
+      ],
+      "id": "fcc815f8-71ab-438e-92dd-cb54a61729d1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0ATW1V6EQL",
+          "mode": "list",
+          "cachedResultName": "all-akmsp"
+        },
+        "text": "=Billing Request\nsender: {{ $('AI Agent').item.json.output.customer_email }}\nsubject: {{ $('AI Agent').item.json.output.subject }}\nmessage: {{ $('AI Agent').item.json.output.message }}\nLOOK INTO IT ASAP",
+        "otherOptions": {
+          "mrkdwn": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        976,
+        -304
+      ],
+      "id": "5f3c49a0-dc88-4d90-beae-4bf78cc463ec",
+      "name": "Send a message3",
+      "webhookId": "5f1c628b-f04b-4b67-a6c5-8b84d82ab50d",
+      "credentials": {
+        "slackApi": {
+          "id": "ezQEvEk53nTqPq3N",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a helpful and concise customer support reply for this issue:\nsubject: {{ $('AI Agent').item.json.output.subject }}\nmessage: {{ $('AI Agent').item.json.output.message }}\n\nTone: friendly, startup SaaS support, professional."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        528,
+        -128
+      ],
+      "id": "c2a93442-43b1-4dec-82bd-da714ba11b8b",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lS8sMfpLBIEPWFtb",
+          "name": "Google Gemini Api 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "We’re Here to Help",
+        "emailType": "text",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "68e7b780-95d9-45d1-ba84-3b827bcf129b",
+      "name": "Send a message1",
+      "webhookId": "4ea198bf-b37d-4122-b866-ac41a8444368",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1344061146,
+          "mode": "list",
+          "cachedResultName": "Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1344061146"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Customer Email": "={{ $('AI Agent').item.json.output.customer_email }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Category": "={{ $('AI Agent').item.json.output.support_category }}",
+            "Priority": "={{ $('AI Agent').item.json.output.priority_level }}",
+            "Status": "RESOLVED_AUTO",
+            "Assigned To": "AI SUPPORT"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        -128
+      ],
+      "id": "fa8a8edd-9ca1-4eb8-9be2-d13bf089ab16",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "Thanks for Your Feedback",
+        "emailType": "text",
+        "message": "Hi,\n\nThank you for sharing your suggestion. We truly value customer feedback and have shared this with our product team for review.\n\nBest regards,\nProduct Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        48
+      ],
+      "id": "23c57422-3374-4101-8df0-016efaa33f14",
+      "name": "Send a message6",
+      "webhookId": "4ea198bf-b37d-4122-b866-ac41a8444368",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1344061146,
+          "mode": "list",
+          "cachedResultName": "Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1344061146"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Customer Email": "={{ $('AI Agent').item.json.output.customer_email }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Category": "={{ $('AI Agent').item.json.output.support_category }}",
+            "Priority": "={{ $('AI Agent').item.json.output.priority_level }}",
+            "Status": "LOGGED",
+            "Assigned To": "Product Roadmap"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        48
+      ],
+      "id": "dcd8844a-31e5-43ea-b5e6-256775f17e81",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent').item.json.output.customer_email }}",
+        "subject": "We’d Like to Help",
+        "emailType": "text",
+        "message": "Hi,\n\nWe’re sorry to hear that. We’ve received your refund/cancellation request. Before proceeding, we’d love the chance to help resolve any issue you faced.\n\nOur team will contact you shortly.\n\nBest regards,\nCustomer Support Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        224
+      ],
+      "id": "39c482c2-9a2b-4658-8a62-6671ce9e38c0",
+      "name": "Send a message7",
+      "webhookId": "4ea198bf-b37d-4122-b866-ac41a8444368",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Yv00Q3M1dVeL6CVj",
+          "name": "Gmail account new"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o",
+          "mode": "list",
+          "cachedResultName": "Major_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1344061146,
+          "mode": "list",
+          "cachedResultName": "Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19bZJc8mFLrofqSJOFq0BgwkhpQHin2wMYL8AjjCvE5o/edit#gid=1344061146"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Customer Email": "={{ $('AI Agent').item.json.output.customer_email }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Category": "={{ $('AI Agent').item.json.output.support_category }}",
+            "Priority": "={{ $('AI Agent').item.json.output.priority_level }}",
+            "Status": "RETENTION_PENDING",
+            "Assigned To": "Founder / Retention Team"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        224
+      ],
+      "id": "853ce087-95e6-4baa-b73c-436cbf631c46",
+      "name": "Append row in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y6c3h7jreEy6By27",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0ATW1V6EQL",
+          "mode": "list",
+          "cachedResultName": "all-akmsp"
+        },
+        "text": "=REFUND/CANCEL Request\nsender: {{ $('AI Agent').item.json.output.customer_email }}\nsubject: {{ $('AI Agent').item.json.output.subject }}\nmessage: {{ $('AI Agent').item.json.output.message }}\nLOOK INTO IT ASAP",
+        "otherOptions": {
+          "mrkdwn": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        976,
+        224
+      ],
+      "id": "15eb8d27-a068-470c-9520-3d0410d4b169",
+      "name": "Send a message8",
+      "webhookId": "5f1c628b-f04b-4b67-a6c5-8b84d82ab50d",
+      "credentials": {
+        "slackApi": {
+          "id": "ezQEvEk53nTqPq3N",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message4": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet3": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message6": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message7": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet4": {
+      "main": [
+        [
+          {
+            "node": "Send a message8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3c747649-0eae-4b80-a34f-8885f3c6761e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c52de5d7bc527ae852bf8242f43ef0b225f796239d0b469b5286a5f22a4332eb"
+  },
+  "id": "xfSLOWlkt2apAuDx",
+  "tags": []
+}
